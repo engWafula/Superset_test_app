@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Web site created using create-react-app" />
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+  <title>React App</title>
+</head>
+<body>
+
+  <!-- Include Superset SDK -->
+  <script src="https://unpkg.com/@superset-ui/embedded-sdk"></script>
+  <!-- Include Axios for HTTP requests -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <script>
+    function getToken() {
+      return axios.get("http://localhost:9000/guest-token")
+        .then(response => response.data.token)
+        .catch(error => {
+          console.error('Error:', error);
+          return null;
+        });
+    }
+
+    function embedDashboard(token) {
+      const dashboardContainer = document.getElementById("dashboard-container");
+
+      if (dashboardContainer) {
+        const placeholderDiv = document.getElementById("dashboard-placeholder");
+
+        if (placeholderDiv) {
+          // Replace content of the placeholder div with a new div
+          const newDashboardContainer = document.createElement('div');
+          newDashboardContainer.id = 'dashboard';
+          dashboardContainer.replaceChild(newDashboardContainer, placeholderDiv);
+        }
+
+        if (token) {
+          supersetEmbeddedSdk.embedDashboard({
+            id: "11e861a1-2985-497f-9597-672c463a1831",
+            supersetDomain: "http://localhost:8080",
+            mountPoint: document.getElementById("dashboard"),
+            fetchGuestToken: () => token,
+            dashboardUiConfig: {
+              hideTitle: true,
+              hideChartControls: true,
+              hideTab: true,
+              width: 1000
+            },
+          });
+        }
+      }
+    }
+
+    function updateDashboardStyle(token) {
+      const container = document.getElementById("dashboard");
+      if (container && container.children[0]) {
+        container.children[0].style.width = "100%";
+        container.children[0].style.height = "800px";
+        container.children[0].style.border = "none";
+      }
+    }
+
+    function fetchAndEmbedDashboard() {
+      getToken().then(token => {
+        embedDashboard(token);
+        updateDashboardStyle(token);
+      });
+    }
+
+    // Initial load
+    fetchAndEmbedDashboard();
+
+    // Refetch token and update dashboard every 4 minutes
+    const intervalId = setInterval(fetchAndEmbedDashboard, 4 * 60 * 1000);
+
+    // Cleanup interval on page unload
+    window.addEventListener('beforeunload', () => clearInterval(intervalId));
+  </script>
+
+  <!-- Your static content -->
+  <div style="width: 100%; height: 100px;">
+    <h1>TIMS Dashboard in HTML and CSS</h1>
+    <div id="dashboard-container" style="padding: 4px;">
+      <div id="dashboard-placeholder" style="padding: 5px;">
+        <!-- Placeholder for the embedded dashboard -->
+      </div>
+    </div>
+  </div>
+</body>
+</html>
